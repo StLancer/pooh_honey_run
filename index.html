@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Pooh's Honey Run — A vibrant retro 2D pixel auto-runner. Guide Winnie the Pooh through the Hundred Acre Wood, dodge bees, and collect honey!" />
+  <title>Pooh's Honey Run 🍯</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Fredoka+One&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Store UI Styles */
+    .store-panel { background: rgba(0,0,0,0.4); padding: 10px; border-radius: 8px; margin: 15px 0; border: 2px solid #FBC02D; text-align: center; }
+    .coin-display { color: #FFD700; font-family: 'Press Start 2P', monospace; font-size: 14px; margin-bottom: 10px; text-shadow: 2px 2px 0px #000; }
+    .char-select-container { display: flex; justify-content: center; gap: 15px; }
+    .char-card { width: 80px; padding: 5px; background: #fff; border-radius: 8px; border: 3px solid #ccc; cursor: pointer; transition: transform 0.2s; position: relative; }
+    .char-card:hover { transform: scale(1.05); }
+    .char-card.selected { border-color: #FBC02D; background: #FFF9E6; box-shadow: 0 0 10px #FBC02D; }
+    .char-card.locked { filter: grayscale(100%); opacity: 0.7; }
+    .char-card img { width: 100%; height: 60px; object-fit: contain; }
+    .char-name { font-family: 'Fredoka One', cursive; font-size: 14px; color: #333; margin-top: 5px; }
+    .char-price { font-family: 'Press Start 2P', monospace; font-size: 8px; color: #D32F2F; margin-top: 5px; }
+    .btn-secondary { font-family: 'Press Start 2P', monospace; padding: 10px 15px; font-size: 14px; color: white; background: #388E3C; border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 0 #1B5E20; margin-top: 10px; }
+    .btn-secondary:active { transform: translateY(4px); box-shadow: 0 0 0 #1B5E20; }
+  </style>
+</head>
+<body>
+  <div id="game-wrapper">
+    <canvas id="game-canvas" width="800" height="450"></canvas>
+
+    <!-- PAUSE BUTTON (shown during gameplay) -->
+    <button id="btn-pause" class="hud-btn" title="Pause (P)" style="display:none">⏸</button>
+
+    <!-- START SCREEN -->
+    <div id="screen-start" class="screen active">
+      <div class="screen-inner">
+        <div class="title-art">🍯</div>
+        <h1 class="game-title">POOH'S<br>HONEY RUN</h1>
+        <p class="subtitle">Help Pooh collect all the honey!</p>
+        
+        <div class="store-panel">
+          <div class="coin-display">💰 Coins: <span id="display-coins">0</span></div>
+          <div class="char-select-container">
+            <div class="char-card selected" id="char-pooh" onclick="selectCharacter('pooh')">
+              <img src="assets/pooh.png" alt="Pooh">
+              <div class="char-name">Pooh</div>
+              <div class="char-price">Unlocked</div>
+            </div>
+            <div class="char-card locked" id="char-capybara" onclick="selectCharacter('capybara')">
+              <img src="assets/capybara.png" alt="Capybara">
+              <div class="char-name">Capybara</div>
+              <div class="char-price">1,000 💰</div>
+            </div>
+            <div class="char-card locked" id="char-batman" onclick="selectCharacter('batman')">
+              <img src="assets/batman.png" alt="Batman">
+              <div class="char-name">Batman</div>
+              <div class="char-price">5,000 💰</div>
+            </div>
+          </div>
+        </div>
+
+        <button id="btn-start" class="btn-primary">🐻 START RUNNING!</button>
+        <p class="high-score-label">Best: <span id="display-highscore">0</span> pts</p>
+      </div>
+    </div>
+
+    <!-- PAUSE SCREEN (with Settings built in) -->
+    <div id="screen-pause" class="screen">
+      <div class="screen-inner">
+        <div class="title-art">⏸</div>
+        <h2 class="pause-title">PAUSED</h2>
+
+        <div class="settings-panel">
+          <div class="setting-row">
+            <label class="setting-label">🎵 Music</label>
+            <div class="slider-wrap">
+              <input type="range" id="volume-slider" class="volume-slider" min="0" max="100" value="25" />
+              <span id="volume-value" class="vol-val">25%</span>
+            </div>
+          </div>
+        </div>
+
+        <button id="btn-resume" class="btn-primary">▶ RESUME</button>
+        <button id="btn-restart-pause" class="btn-primary" style="background:#C82228; color:#fff; box-shadow: 0 4px 0 #6b0000; margin-top: 10px;">🔄 RESTART</button>
+        <button id="btn-home-pause" class="btn-secondary" style="background:#1976D2; box-shadow: 0 4px 0 #0D47A1;">🏠 MAIN MENU</button>
+        <p class="restart-hint">or press <strong>P / SPACE</strong> to resume</p>
+      </div>
+    </div>
+
+    <!-- GAME OVER SCREEN -->
+    <div id="screen-gameover" class="screen">
+      <div class="screen-inner">
+        <div class="title-art">💀</div>
+        <h2 class="gameover-title">OH BOTHER!</h2>
+        <p class="gameover-sub">The bees got Pooh...</p>
+        <div class="score-board">
+          <div class="score-row"><span>Score</span><span id="go-score">0</span></div>
+          <div class="score-row"><span>Distance</span><span id="go-distance">0 m</span></div>
+          <div class="score-row highlight"><span>Best Score</span><span id="go-highscore">0</span></div>
+        </div>
+        <button id="btn-restart" class="btn-primary">🔄 TRY AGAIN</button>
+        <button id="btn-home-gameover" class="btn-secondary" style="background:#1976D2; box-shadow: 0 4px 0 #0D47A1; margin-top:10px; width: 100%;">🏠 MAIN MENU</button>
+        <p class="restart-hint">or press <strong>SPACE</strong></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/audio.js"></script>
+  <script src="js/physics.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/level.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
