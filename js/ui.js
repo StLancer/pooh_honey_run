@@ -122,8 +122,7 @@ const HILLS = Array.from({length: 7}, () => ({
 
 // ── Parallax Background ───────────────────────────────────────
 const Background = (() => {
-  function draw(ctx, canvasW, canvasH, worldX) {
-
+  function drawMeadow(ctx, canvasW, canvasH, worldX) {
     // ── Sky: stepped pixel color bands ──────────────────────
     const skyBands = [
       { y:   0, h:  P*4,  col: '#4DAAEE' },
@@ -159,12 +158,11 @@ const Background = (() => {
 
     // ── Layer 1: Sun (0.05x) ─────────────────────────────────
     const sunOff = worldX * 0.05;
-    // Safely wrap off-screen to avoid any flashing/teleporting mid-screen
     const sunX = ((canvasW + 300 - sunOff) % (canvasW + 600) + canvasW + 600) % (canvasW + 600) - 150;
     const sunY = P * 2;
     fillPixelPattern(ctx, sunX - 40, sunY, SUN_PATTERN, SUN_COLORS, P);
 
-    // Sun rays (pixel lines extending outward)
+    // Sun rays
     ctx.fillStyle = '#FFD700';
     const rayOffsets = [[-P*6,-P*2],[P*6,-P*2],[-P*6,P*6],[P*6,P*6],
                          [-P*2,-P*6],[P*2,-P*6],[-P*3,P*6],[P*3,P*6]];
@@ -183,10 +181,8 @@ const Background = (() => {
     // ── Layer 2: Far hills (0.3x) ────────────────────────────
     const hillOff = worldX * 0.3;
     for (const h of HILLS) {
-      // Safely wrap off-screen left and right so no flashing occurs
       const hx = ((h.x - hillOff) % (canvasW + 500) + canvasW + 500) % (canvasW + 500) - 300;
       const topY = groundTop - h.h * P;
-      // Draw pixel hill as staircase
       for (let col = 0; col < h.w; col++) {
         const dist = Math.abs(col - h.w/2) / (h.w/2);
         const barH = Math.max(1, Math.round(h.h * (1 - dist * dist))) * P;
@@ -200,10 +196,8 @@ const Background = (() => {
     for (const t of FAR_TREES) {
       const tx = ((t.x - treeOff) % (canvasW + 500) + canvasW + 500) % (canvasW + 500) - 150;
       const baseY = groundTop;
-      // Crown (pixel art)
       const crownY = baseY - (t.trunkH + t.crownH) * P;
       fillPixelPattern(ctx, tx - TREE_CROWN[0].length*P/2, crownY, TREE_CROWN, TREE_CROWN_COLORS, P);
-      // Trunk (pixel columns)
       for (let ty = 0; ty < t.trunkH; ty++) {
         ctx.fillStyle = ty % 2 === 0 ? TREE_TRUNK_COLORS[0] : TREE_TRUNK_COLORS[1];
         ctx.fillRect(tx - P, baseY - (ty+1)*P, P*2, P);
@@ -216,11 +210,8 @@ const Background = (() => {
       const tx = ((t.x - nearOff) % (canvasW + 500) + canvasW + 500) % (canvasW + 500) - 150;
       const baseY = groundTop;
       const crownY = baseY - (t.trunkH + NEAR_CROWN.length) * P;
-
-      // Crown
       fillPixelPattern(ctx, tx - NEAR_CROWN[0].length*P/2, crownY, NEAR_CROWN, NEAR_CROWN_COLORS, P);
 
-      // Trunk pixel columns (3 wide)
       for (let ty = 0; ty < t.trunkH; ty++) {
         for (let tw = 0; tw < 3; tw++) {
           const col = (tw === 0 || ty % 3 === 0) ? '#8D5B3A' : (tw === 1 ? '#7A4F30' : '#6B4228');
@@ -229,13 +220,123 @@ const Background = (() => {
         }
       }
 
-      // Hanging beehive (pixel art)
       const hiveX = tx - HIVE_PATTERN[0].length*P/2 + P*t.hiveOff;
       const hiveY = baseY - t.trunkH*P + P*2;
       fillPixelPattern(ctx, hiveX, hiveY, HIVE_PATTERN, HIVE_COLORS, P);
-      // String
       ctx.fillStyle = '#6B4228';
       ctx.fillRect(hiveX + HIVE_PATTERN[0].length*P/2 - P/2, hiveY - P*2, P, P*2);
+    }
+  }
+
+  // ── Level 3: Fiery Skies & Inferno Forest Theme ─────────────
+  function drawInferno(ctx, canvasW, canvasH, worldX) {
+    // 1. Deep fiery apocalyptic sky bands
+    const infernoSky = [
+      { y: 0,    h: P*4,   col: '#120517' }, // Midnight ash
+      { y: P*4,  h: P*4,   col: '#26081B' }, // Deep scorched violet
+      { y: P*8,  h: P*6,   col: '#4A0E18' }, // Crimson shadow
+      { y: P*14, h: P*8,   col: '#7A1C12' }, // Volcanic blaze
+      { y: P*22, h: P*999, col: '#B33C12' }, // Glowing molten horizon
+    ];
+    for (const b of infernoSky) {
+      ctx.fillStyle = b.col;
+      ctx.fillRect(0, b.y, canvasW, b.h);
+    }
+
+    // 2. Volcanic ground bedrock
+    const groundTop = Math.floor(canvasH * 0.80);
+    const volcanicBands = [
+      { off: 0,     h: P,   col: '#2C1810' }, // Charred basalt
+      { off: P,     h: P,   col: '#3E1D13' },
+      { off: P*2,   h: P,   col: '#22110D' },
+      { off: P*3,   h: P,   col: '#180B08' },
+      { off: P*4,   h: 999, col: '#100705' },
+    ];
+    for (const d of volcanicBands) {
+      ctx.fillStyle = d.col;
+      ctx.fillRect(0, groundTop + d.off, canvasW, d.h);
+    }
+    // Smoldering ember veins across ground surface
+    const ashOff = -(worldX % (P * 3));
+    for (let gx = ashOff - P; gx < canvasW + P; gx += P) {
+      ctx.fillStyle = (Math.floor((gx + worldX)/P) % 4 === 0) ? '#FF3D00' : '#4E2114';
+      ctx.fillRect(gx, groundTop, P, P);
+    }
+
+    // 3. Eclipsed Blood Moon / Fiery Celestial Body (0.05x)
+    const moonOff = worldX * 0.05;
+    const moonX = ((canvasW + 300 - moonOff) % (canvasW + 600) + canvasW + 600) % (canvasW + 600) - 150;
+    const moonY = P * 2;
+
+    // Blood Moon Corona Flares
+    ctx.fillStyle = '#FF1744';
+    const flareOffsets = [[-P*6,-P*2],[P*6,-P*2],[-P*6,P*6],[P*6,P*6],
+                          [-P*2,-P*6],[P*2,-P*6],[-P*3,P*6],[P*3,P*6]];
+    for (const [rx,ry] of flareOffsets) {
+      ctx.fillRect(moonX - 40 + 4*P + rx, moonY + 4*P + ry, P, P);
+    }
+    // Deep red/obsidian core
+    fillPixelPattern(ctx, moonX - 40, moonY, SUN_PATTERN, ['#D50000', '#3E0808', '#140303'], P);
+
+    // 4. Volcanic Smog & Smoke Clouds (0.1x)
+    const SMOKE_COLORS = ['#3E2723', '#241414'];
+    const cloudOff = worldX * 0.1;
+    for (const c of CLOUDS) {
+      const cx = ((c.x - cloudOff) % (canvasW + 400) + canvasW + 400) % (canvasW + 400) - 150;
+      const pattern = c.big ? CLOUD_A : CLOUD_B;
+      fillPixelPattern(ctx, cx, c.y + 12, pattern, SMOKE_COLORS, P);
+    }
+
+    // 5. Jagged Volcanic Peaks (0.3x)
+    const hillOff = worldX * 0.3;
+    for (const h of HILLS) {
+      const hx = ((h.x - hillOff) % (canvasW + 500) + canvasW + 500) % (canvasW + 500) - 300;
+      for (let col = 0; col < h.w; col++) {
+        const dist = Math.abs(col - h.w/2) / (h.w/2);
+        const barH = Math.max(1, Math.round(h.h * (1.25 - dist * 0.9))) * P;
+        ctx.fillStyle = col % 2 === 0 ? '#3A141A' : '#270C12';
+        ctx.fillRect(hx + col * P, groundTop - barH, P, barH);
+      }
+    }
+
+    // 6. Charred Pine Silhouettes (0.3x)
+    const CHARRED_CROWN = ['#230A0E', '#170608'];
+    const CHARRED_TRUNK = ['#1C0B08', '#100504'];
+    const treeOff = worldX * 0.3;
+    for (const t of FAR_TREES) {
+      const tx = ((t.x - treeOff) % (canvasW + 500) + canvasW + 500) % (canvasW + 500) - 150;
+      const baseY = groundTop;
+      const crownY = baseY - (t.trunkH + t.crownH) * P;
+      fillPixelPattern(ctx, tx - TREE_CROWN[0].length*P/2, crownY, TREE_CROWN, CHARRED_CROWN, P);
+      for (let ty = 0; ty < t.trunkH; ty++) {
+        ctx.fillStyle = ty % 2 === 0 ? CHARRED_TRUNK[0] : CHARRED_TRUNK[1];
+        ctx.fillRect(tx - P, baseY - (ty+1)*P, P*2, P);
+      }
+    }
+
+    // 7. Near Scorched Trunks (0.6x) — No cheerful beehives in inferno
+    const nearOff = worldX * 0.6;
+    for (const t of NEAR_TRUNKS) {
+      const tx = ((t.x - nearOff) % (canvasW + 500) + canvasW + 500) % (canvasW + 500) - 150;
+      const baseY = groundTop;
+      const crownY = baseY - (t.trunkH + NEAR_CROWN.length) * P;
+      fillPixelPattern(ctx, tx - NEAR_CROWN[0].length*P/2, crownY, NEAR_CROWN, ['#1C080B', '#290E12'], P);
+
+      for (let ty = 0; ty < t.trunkH; ty++) {
+        for (let tw = 0; tw < 3; tw++) {
+          const col = (tw === 1) ? '#2E120A' : '#1B0905';
+          ctx.fillStyle = col;
+          ctx.fillRect(tx - P + tw*P, baseY - (ty+1)*P, P, P);
+        }
+      }
+    }
+  }
+
+  function draw(ctx, canvasW, canvasH, worldX, levelId = 1) {
+    if (levelId === 3) {
+      drawInferno(ctx, canvasW, canvasH, worldX);
+    } else {
+      drawMeadow(ctx, canvasW, canvasH, worldX);
     }
   }
 
@@ -243,57 +344,71 @@ const Background = (() => {
 })();
 
 
-// ── HUD Renderer (Bigger) ──────────────────────────────────────
+// ── HUD Renderer (Using heart.png and Mushroom Indicator) ──────
 const HUD = (() => {
 
+  const HUD_HEART_IMG = (() => {
+    const img = new Image();
+    img.src = 'assets/heart.png';
+    return img;
+  })();
+
+  const HUD_MUSHROOM_IMG = (() => {
+    const img = new Image();
+    img.src = 'assets/mushroom.png';
+    return img;
+  })();
+
   function drawHearts(ctx, hearts, maxHearts) {
-    const x0 = 16, y0 = 18, spacing = 38;
+    const x0 = 18, y0 = 16, size = 32, spacing = 38;
     for (let i = 0; i < maxHearts; i++) {
-      drawHeart(ctx, x0 + i * spacing, y0, 16, i < hearts);
+      const hx = x0 + i * spacing;
+      const filled = i < hearts;
+      ctx.save();
+      if (filled) {
+        if (HUD_HEART_IMG.complete && HUD_HEART_IMG.naturalWidth > 0) {
+          ctx.drawImage(HUD_HEART_IMG, hx, y0, size, size);
+        } else {
+          ctx.fillStyle = '#E8203A';
+          ctx.beginPath(); ctx.arc(hx + size/2, y0 + size/2, size/2.2, 0, Math.PI*2); ctx.fill();
+        }
+      } else {
+        // Empty heart slot (dark silhouette with outline)
+        ctx.globalAlpha = 0.3;
+        if (HUD_HEART_IMG.complete && HUD_HEART_IMG.naturalWidth > 0) {
+          ctx.drawImage(HUD_HEART_IMG, hx, y0, size, size);
+        } else {
+          ctx.fillStyle = '#333344';
+          ctx.beginPath(); ctx.arc(hx + size/2, y0 + size/2, size/2.2, 0, Math.PI*2); ctx.fill();
+        }
+      }
+      ctx.restore();
     }
   }
 
-  function drawHeart(ctx, cx, cy, r, filled) {
+  function drawMushroomStatus(ctx, hasMushroom) {
+    if (!hasMushroom) return;
+    const mx = 145, my = 14, size = 34;
     ctx.save();
-    
-    // Heart path (narrower shape)
-    ctx.beginPath();
-    ctx.moveTo(cx, cy + r * 0.3);
-    ctx.bezierCurveTo(cx - r*0.8, cy - r*0.5, cx - r*1.2, cy + r*0.4, cx, cy + r*1.2);
-    ctx.bezierCurveTo(cx + r*1.2, cy + r*0.4, cx + r*0.8, cy - r*0.5, cx, cy + r*0.3);
-    ctx.closePath();
+    // Glowing pulse
+    const pulse = (Math.sin(performance.now() / 150) + 1) / 2;
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.strokeStyle = '#FFD700';
+    ctx.lineWidth = 2;
+    ctx.fillRect(mx - 4, my - 2, 175, size + 4);
+    ctx.strokeRect(mx - 4, my - 2, 175, size + 4);
 
-    if (filled) {
-      // Base red
-      ctx.fillStyle = '#E8203A';
-      ctx.fill();
-      // Highlight red
-      ctx.fillStyle = '#FF4466';
-      ctx.beginPath();
-      ctx.moveTo(cx - r*0.3, cy - r*0.2);
-      ctx.bezierCurveTo(cx - r*0.6, cy - r*0.5, cx - r*0.9, cy + r*0.1, cx - r*0.2, cy + r*0.5);
-      ctx.closePath();
-      ctx.fill();
-      // White glare
-      ctx.fillStyle = 'rgba(255,255,255,0.45)';
-      ctx.beginPath();
-      ctx.ellipse(cx - r*0.3, cy - r*0.1, r*0.28, r*0.2, -0.5, 0, Math.PI*2);
-      ctx.fill();
-    } else {
-      // Empty heart (dark gray fill)
-      ctx.fillStyle = '#333344';
-      ctx.fill();
+    if (HUD_MUSHROOM_IMG.complete && HUD_MUSHROOM_IMG.naturalWidth > 0) {
+      ctx.drawImage(HUD_MUSHROOM_IMG, mx, my, size, size);
     }
 
-    // Black stroke for both
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-    
+    ctx.font = '8px "Press Start 2P", monospace';
+    ctx.fillStyle = `hsl(${45 + pulse * 15}, 100%, ${55 + pulse * 25}%)`;
+    ctx.fillText('[R] MEGA READY', mx + size + 6, my + 20);
     ctx.restore();
   }
 
-  function drawScore(ctx, score, distance, canvasW) {
+  function drawScore(ctx, score, canvasW) {
     ctx.save();
     ctx.textAlign = 'right';
     ctx.shadowColor = '#000'; ctx.shadowBlur = 6;
@@ -301,17 +416,12 @@ const HUD = (() => {
     // Score (big)
     ctx.font = '18px "Press Start 2P", monospace';
     ctx.fillStyle = '#FFE566';
-    ctx.fillText(`${score}`, canvasW - 16, 24);
+    ctx.fillText(`${score}`, canvasW - 16, 26);
 
     // "PTS" label
     ctx.font = '9px "Press Start 2P", monospace';
     ctx.fillStyle = '#FFC200';
-    ctx.fillText('PTS', canvasW - 16, 38);
-
-    // Distance
-    ctx.font = '9px "Press Start 2P", monospace';
-    ctx.fillStyle = '#A8E8FF';
-    ctx.fillText(`${Math.floor(distance)} m`, canvasW - 16, 54);
+    ctx.fillText('PTS', canvasW - 16, 42);
 
     ctx.textAlign = 'left';
     ctx.restore();
@@ -323,7 +433,6 @@ const HUD = (() => {
     const gw = 140;
     const gh = 18;
 
-    // Label (above gauge)
     ctx.save();
     ctx.font = '7px "Press Start 2P", monospace';
     ctx.fillStyle = '#FFD580';
@@ -331,12 +440,11 @@ const HUD = (() => {
     ctx.shadowColor = '#000'; ctx.shadowBlur = 3;
     ctx.fillText('SWEET RUSH', canvasW / 2, gy + gh + 13);
 
-    // BG
     ctx.fillStyle = 'rgba(0,0,0,0.55)';
     ctx.fillRect(gx - 2, gy - 2, gw + 4, gh + 4);
 
     if (sweetRush) {
-      const frac = sweetRushTimer / 5.0;
+      const frac = sweetRushTimer / 7.0;
       const hue  = (performance.now() / 8) % 360;
       ctx.fillStyle = `hsl(${hue},100%,55%)`;
       ctx.fillRect(gx, gy, gw * frac, gh);
@@ -353,11 +461,9 @@ const HUD = (() => {
       }
     }
 
-    // Pixel border
     ctx.strokeStyle = '#FFAE00';
     ctx.lineWidth = 2;
     ctx.strokeRect(gx, gy, gw, gh);
-    // Notch marks
     ctx.strokeStyle = 'rgba(0,0,0,0.35)';
     ctx.lineWidth = 1;
     for (let i = 1; i < maxStreak; i++) {
@@ -369,15 +475,5 @@ const HUD = (() => {
     ctx.restore();
   }
 
-  function drawSpeedBadge(ctx, speedMult) {
-    if (speedMult <= 1.0) return;
-    ctx.save();
-    ctx.font = '8px "Press Start 2P", monospace';
-    ctx.fillStyle = '#FF9900';
-    ctx.shadowColor = '#000'; ctx.shadowBlur = 4;
-    ctx.fillText(`×${speedMult.toFixed(1)}`, 16, 60);
-    ctx.restore();
-  }
-
-  return { drawHearts, drawScore, drawSweetRushGauge, drawSpeedBadge };
+  return { drawHearts, drawMushroomStatus, drawScore, drawSweetRushGauge };
 })();
