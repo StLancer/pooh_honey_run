@@ -2,7 +2,7 @@
 
 > A vibrant retro 2D pixel platformer built with pure HTML5 Canvas and the Web Audio API. Zero dependencies.
 
-🎮 **[Play Live Demo](https://YOUR-GITHUB-USERNAME.github.io/YOUR-REPO-NAME/) 
+🎮 **[Play Live Demo](https://pooh-honey-run.vercel.app/) 
 
 ![Pooh's Honey Run Gameplay Screenshot](assets/gameplay.png)
 
