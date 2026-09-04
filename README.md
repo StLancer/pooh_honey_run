@@ -43,14 +43,6 @@ No installations, bundlers, or `node_modules` required!
    ```
 2. Double-click **`index.html`** to play in any web browser.
 
----
-
-## 🌐 Deploy to GitHub Pages (Free Hosting)
-
-1. Push this code to your GitHub repository.
-2. In your repo on GitHub, go to **Settings** → **Pages**.
-3. Under **Branch**, select `main` / `root` and click **Save**.
-4. Your game will be live in about 1 minute at `https://YOUR-GITHUB-USERNAME.github.io/YOUR-REPO-NAME/`!
 
 ---
 
